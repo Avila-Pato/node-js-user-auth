@@ -12,14 +12,21 @@ app.get('/', (request, response) => { // Creacion de rutas para Endpoints
   response.send('Hello World') // Cuando se entre a ala raiz del proyecto '/' responde con un hello world
 })
 // Creacion de  Endpoints lo llamamos con el metodo post
-app.post('/login', (request, response) => { // Login de usuario
+app.post('/login', async (request, response) => { // Login de usuario
+  const { username, password } = request.body
+  try {
+    const user = await UserRepository.login({ username, password })
+    response.send({ user })
+  } catch (error) {
+    response.status(401).send(error.message)
+  }
 }) // response.json({ user: 'pato' })
-app.post('/register', (request, response) => { // Registracion de usuario
+app.post('/register', async (request, response) => { // Registracion de usuario
   const { username, password } = request.body
   console.log({ username, password })
 
   try {
-    const id = UserRepository.create({ username, password })
+    const id = await UserRepository.create({ username, password })
     response.send({ id })
   } catch (error) {
     response.status(400).send(error.message)

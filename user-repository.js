@@ -17,15 +17,10 @@ const User = Schema('User', { // Define el esquema del usuario correctamente
 })
 // Validaciones
 export class UserRepository {
-  static create ({ username, password }) {
+  static async create ({ username, password }) {
     // Validaciones de username y password
-    if (typeof username !== 'string' || username.length < 3) {
-      throw new Error('Username must be a string of at least 3 characters')
-    }
-    if (typeof password !== 'string' || password.length < 6) {
-      throw new Error('Password must be a string of at least 6 characters')
-    }
-
+    Validation.usernmae(username)
+    Validation.password(password)
     // Verificar si el usuario ya existe
     const existingUser = User.findOne({ username })
     if (existingUser) {
@@ -34,7 +29,7 @@ export class UserRepository {
 
     // Generar un nuevo ID único para el usuario
     const id = crypto.randomUUID()
-    const hashedPassword = bcrypt.hashSync(password, SALT_ROUNDS)
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS) // Si se usa e hasSync Bloquea el thread principal
 
     // Crear y guardar el nuevo usuario
     User.create({
@@ -46,17 +41,26 @@ export class UserRepository {
     return id
   }
 
-  static login ({ username, password }) {
+  static async login ({ username, password }) {
     // Implementa la lógica de autenticación aquí
+    Validation.usernmae(username)
+    Validation.password(password)
+
     const user = User.findOne({ username })
-    if (!user) {
-      throw new Error('User not found')
-    }
+    if (!user) throw new Error('username does not exist')
 
-    if (user.password !== password) {
-      throw new Error('Incorrect password')
-    }
+    // mirar sie s valido
+    const isValid = await bcrypt.compareSync(password, user.password) // Inscripta el password para hashear el siguiente para compararlo
+    if (!isValid) throw new Error('password is invaid')
+    return user
+  }
+}
+class Validation {
+  static username (username) {
+    if (typeof username !== 'string') throw new Error('username msut be a string')
+    if (username.length < 3) throw new Error('Username must be a string of at least 3 characters')
 
-    return 'Login successful' // Ejemplo simple de éxito
+    if (typeof username !== 'string') throw new Error('username msut be a string')
+    if (username.length < 6) throw new Error('Username must be a string of at least 6 characters')
   }
 }
